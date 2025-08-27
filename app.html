@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ParkSense</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f4f8;
+      color: #333;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      font-size: 3rem;
+      margin: 30px 0;
+      color: #0066ff;
+      text-shadow: 0 0 4px #aad4ff;
+    }
+
+    #map {
+      height: 450px;
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto 30px auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 102, 255, 0.2);
+    }
+
+    pre#parkingData {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto 40px auto;
+      background: #ffffff;
+      border: 1px solid #cde4ff;
+      padding: 20px;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      overflow-x: auto;
+    }
+
+    ul {
+      padding-left: 16px;
+    }
+
+    ul li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ParkSense</h1>
+  <div id="map"></div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1FYit5uT-Ys94uZBc5K7sxsis0xqq-A8",
+      authDomain: "parksense-3c095.firebaseapp.com",
+      databaseURL: "https://parksense-3c095-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "parksense-3c095",
+      storageBucket: "parksense-3c095.firebasestorage.app",
+      messagingSenderId: "282721617237",
+      appId: "1:282721617237:web:deaad7d010401ea0bedbdc"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    const dbRef = firebase.database().ref('parkingAreas');
+
+    // Set up the map
+    const map = L.map('map').setView([20.5937, 78.9629], 5); // Center of India
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const coords = {
+      area1: [19.0760, 72.8777], // Mumbai
+      area2: [28.7041, 77.1025]  // Delhi
+    };
+
+    let markers = {};
+
+    dbRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      // Remove old markers
+      for (const key in markers) {
+        map.removeLayer(markers[key]);
+      }
+      markers = {};
+
+      for (const area in data) {
+        if (!coords[area]) continue;
+
+        const slotData = data[area];
+        let popupHtml = `<strong>${area.toUpperCase()}</strong><br><ul>`;
+
+        for (const slot in slotData) {
+          popupHtml += `<li>${slot}: <strong>${slotData[slot]}</strong></li>`;
+        }
+        popupHtml += `</ul>`;
+
+        markers[area] = L.marker(coords[area]).addTo(map).bindPopup(popupHtml);
+      }
+    });
+  </script>
+</body>
+</html>
